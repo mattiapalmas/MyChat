@@ -1,4 +1,4 @@
-package com.utils
+package com.mychat.utils
 
 import com.mychat.data.model.MessageChat
 

@@ -14,6 +14,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -29,14 +30,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.painterResource
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mychat.R
+import com.mychat.screens.chat.ChatViewModel
 import com.mychat.ui.DefaultPreview
-import com.utils.Constants.CURRENT_USER_ID
-import com.utils.Constants.FAKE_MESSAGES
+import com.mychat.utils.Constants.CURRENT_USER_ID
+import com.mychat.utils.Constants.FAKE_MESSAGES
 
 @Composable
-fun DefaultChat(modifier: Modifier = Modifier, historyMessages: List<MessageChat>) {
+fun DefaultChat(
+    modifier: Modifier = Modifier,
+    chatViewModel: ChatViewModel = viewModel()
+    ) {
 
+    val chatMessages by chatViewModel.chatMessages.collectAsState()
     var chatBoxText by rememberSaveable { mutableStateOf("") }
 
     ConstraintLayout(modifier = modifier.fillMaxSize()) {
@@ -53,7 +60,7 @@ fun DefaultChat(modifier: Modifier = Modifier, historyMessages: List<MessageChat
                     height = Dimension.fillToConstraints
                 }
         ) {
-            items(items = historyMessages) { item ->
+            items(items = chatMessages) { item ->
                 ChatItem(message = item, userId = CURRENT_USER_ID)
             }
         }
@@ -138,7 +145,42 @@ fun ChatBox(
 @Composable
 fun DefaultChatPreview() {
     MyChatTheme {
-        DefaultChat(historyMessages = FAKE_MESSAGES)
+        val chatMessages = FAKE_MESSAGES
+        var chatBoxText by rememberSaveable { mutableStateOf("") }
+
+        ConstraintLayout(modifier = Modifier.fillMaxSize()) {
+            val (messages, chatBox) = createRefs()
+
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .constrainAs(messages) {
+                        top.linkTo(parent.top)
+                        bottom.linkTo(chatBox.top)
+                        start.linkTo(parent.start)
+                        end.linkTo(parent.end)
+                        height = Dimension.fillToConstraints
+                    }
+            ) {
+                items(items = chatMessages) { item ->
+                    ChatItem(message = item, userId = CURRENT_USER_ID)
+                }
+            }
+
+            Row(
+                modifier = Modifier
+                    .constrainAs(chatBox) {
+                        bottom.linkTo(parent.bottom)
+                        start.linkTo(parent.start)
+                        end.linkTo(parent.end)
+                    }
+            ) {
+                ChatBox(
+                    textFieldValue = chatBoxText,
+                    onTextChanged = { chatBoxText = it }
+                )
+            }
+        }
     }
 }
 
